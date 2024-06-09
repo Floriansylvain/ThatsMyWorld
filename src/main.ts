@@ -20,12 +20,71 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.update()
 document.body.appendChild(renderer.domElement)
 
-new TextureLoader("/grass.png", 16, 16, onTextureLoaded)
+new TextureLoader("/debug.png", 16, 16, onTextureLoaded)
+
+// const gridHelper = new THREE.GridHelper(1000, 1000)
+// scene.add(gridHelper)
+
+// const axesHelper = new THREE.AxesHelper(500)
+// scene.add(axesHelper)
+
+const FACES_OFFSETS: { [key: string]: THREE.Vector3 } = {
+	Up: new THREE.Vector3(0, 1, 0),
+	North: new THREE.Vector3(0, 0, 1),
+	South: new THREE.Vector3(0, 0, -1),
+	East: new THREE.Vector3(-1, 0, 0),
+	West: new THREE.Vector3(1, 0, 0),
+	Down: new THREE.Vector3(0, -1, 0)
+}
+
+function filterFaces(
+	faces: Face[],
+	block: THREE.Vector3,
+	chunk: THREE.Vector3[]
+): Face[] {
+	return faces.filter((face) => {
+		const offset = FACES_OFFSETS[face.orientation]
+		const adjacentBlock = new THREE.Vector3(
+			block.x + offset.x,
+			block.y + offset.y,
+			block.z + offset.z
+		)
+		return !chunk.some((c) => c.equals(adjacentBlock))
+	})
+}
+
+function countVisibleFaces(chunk: THREE.Vector3[]): { [key: string]: number } {
+	const faceCounts: { [key: string]: number } = {
+		Up: 0,
+		North: 0,
+		South: 0,
+		East: 0,
+		West: 0,
+		Down: 0
+	}
+
+	chunk.forEach((block) => {
+		Object.keys(FACES_OFFSETS).forEach((orientation) => {
+			const offset = FACES_OFFSETS[orientation]
+			const adjacentBlock = new THREE.Vector3(
+				block.x + offset.x,
+				block.y + offset.y,
+				block.z + offset.z
+			)
+			if (!chunk.some((c) => c.equals(adjacentBlock))) {
+				faceCounts[orientation]++
+			}
+		})
+	})
+
+	return faceCounts
+}
 
 function onTextureLoaded(textures: THREE.Texture[]) {
 	const chunk = [] as THREE.Vector3[]
-	for (let i = -16; i < 16; i++) {
-		for (let j = -16; j < 16; j++) {
+	const radius = 64
+	for (let i = -radius; i < radius; i++) {
+		for (let j = -radius; j < radius; j++) {
 			chunk.push(
 				new THREE.Vector3(
 					i,
@@ -36,19 +95,20 @@ function onTextureLoaded(textures: THREE.Texture[]) {
 		}
 	}
 
+	const faceCounts = countVisibleFaces(chunk)
+
 	const faces = [
-		new Face("Up", chunk.length, textures[0]),
-		new Face("North", chunk.length, textures[1]),
-		new Face("South", chunk.length, textures[2]),
-		new Face("East", chunk.length, textures[3]),
-		new Face("West", chunk.length, textures[4]),
-		new Face("Down", chunk.length, textures[5])
+		new Face("Up", faceCounts.Up, textures[0]),
+		new Face("North", faceCounts.North, textures[1]),
+		new Face("South", faceCounts.South, textures[2]),
+		new Face("East", faceCounts.East, textures[3]),
+		new Face("West", faceCounts.West, textures[4]),
+		new Face("Down", faceCounts.Down, textures[5])
 	]
 
 	const cubes = [] as Block[]
 	chunk.forEach((block) => {
-		// TODO PUSH FACES ONLY IN CONTACT WITH AIR
-		cubes.push(new Block(faces, block))
+		cubes.push(new Block(filterFaces(faces, block, chunk), block))
 	})
 
 	faces.forEach((face) => {
@@ -56,9 +116,9 @@ function onTextureLoaded(textures: THREE.Texture[]) {
 	})
 }
 
-camera.position.x = 20
-camera.position.y = 20
-camera.position.z = 20
+camera.position.x = 5
+camera.position.y = 5
+camera.position.z = 5
 
 function animate(elapsedTimeMs: number) {
 	renderer.render(scene, camera)

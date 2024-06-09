@@ -27,13 +27,13 @@ export const FACE_ORIENTATION = [
 	},
 	{
 		orientation: "East",
-		position: new Vector3(0.5, 0, 0),
-		rotation: new Vector3(0, 90 * DEG_RAD, 0)
+		position: new Vector3(-0.5, 0, 0),
+		rotation: new Vector3(0, -90 * DEG_RAD, 0)
 	},
 	{
 		orientation: "West",
-		position: new Vector3(-0.5, 0, 0),
-		rotation: new Vector3(0, -90 * DEG_RAD, 0)
+		position: new Vector3(0.5, 0, 0),
+		rotation: new Vector3(0, 90 * DEG_RAD, 0)
 	},
 	{
 		orientation: "South",
