@@ -3,6 +3,7 @@ import * as THREE from "three"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
 import Face from "./face"
 import Block from "./block"
+import TextureLoader from "./textureLoader"
 
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(
@@ -19,29 +20,7 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.update()
 document.body.appendChild(renderer.domElement)
 
-const image = document.createElement("img")
-image.src = "/grass.png"
-image.addEventListener("load", onImageLoaded, false)
-
-function onImageLoaded() {
-	const textures = [] as THREE.Texture[]
-
-	for (let i = 0; i < 6; i++) {
-		const canvas = document.createElement("canvas")
-		canvas.width = 16
-		canvas.height = 16
-
-		const context = canvas.getContext("2d")
-		context?.drawImage(image, 0, 16 * i, 16, 16, 0, 0, 16, 16)
-
-		const texture = new THREE.Texture(canvas)
-		texture.needsUpdate = true
-		texture.magFilter = THREE.NearestFilter
-		textures.push(texture)
-	}
-
-	onTextureLoaded(textures)
-}
+new TextureLoader("/grass.png", 16, 16, onTextureLoaded)
 
 function onTextureLoaded(textures: THREE.Texture[]) {
 	const chunk = [] as THREE.Vector3[]
@@ -68,6 +47,7 @@ function onTextureLoaded(textures: THREE.Texture[]) {
 
 	const cubes = [] as Block[]
 	chunk.forEach((block) => {
+		// TODO PUSH FACES ONLY IN CONTACT WITH AIR
 		cubes.push(new Block(faces, block))
 	})
 
