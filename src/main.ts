@@ -20,7 +20,7 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.update()
 document.body.appendChild(renderer.domElement)
 
-new TextureLoader("/debug.png", 16, 16, onTextureLoaded)
+new TextureLoader("/grass.png", 16, 16, onTextureLoaded)
 
 // const gridHelper = new THREE.GridHelper(1000, 1000)
 // scene.add(gridHelper)
@@ -40,7 +40,7 @@ const FACES_OFFSETS: { [key: string]: THREE.Vector3 } = {
 function filterFaces(
 	faces: Face[],
 	block: THREE.Vector3,
-	chunk: THREE.Vector3[]
+	chunkSet: Set<string>
 ): Face[] {
 	return faces.filter((face) => {
 		const offset = FACES_OFFSETS[face.orientation]
@@ -49,11 +49,14 @@ function filterFaces(
 			block.y + offset.y,
 			block.z + offset.z
 		)
-		return !chunk.some((c) => c.equals(adjacentBlock))
+		return !chunkSet.has(adjacentBlock.toArray().toString())
 	})
 }
 
-function countVisibleFaces(chunk: THREE.Vector3[]): { [key: string]: number } {
+function countVisibleFaces(
+	chunkSet: Set<string>,
+	chunk: THREE.Vector3[]
+): { [key: string]: number } {
 	const faceCounts: { [key: string]: number } = {
 		Up: 0,
 		North: 0,
@@ -71,7 +74,7 @@ function countVisibleFaces(chunk: THREE.Vector3[]): { [key: string]: number } {
 				block.y + offset.y,
 				block.z + offset.z
 			)
-			if (!chunk.some((c) => c.equals(adjacentBlock))) {
+			if (!chunkSet.has(adjacentBlock.toArray().toString())) {
 				faceCounts[orientation]++
 			}
 		})
@@ -82,20 +85,21 @@ function countVisibleFaces(chunk: THREE.Vector3[]): { [key: string]: number } {
 
 function onTextureLoaded(textures: THREE.Texture[]) {
 	const chunk = [] as THREE.Vector3[]
+	const chunkSet = new Set<string>()
 	const radius = 64
 	for (let i = -radius; i < radius; i++) {
 		for (let j = -radius; j < radius; j++) {
-			chunk.push(
-				new THREE.Vector3(
-					i,
-					Math.ceil(Math.sin(i / 25) * 8 + Math.cos(j / 25) * 8),
-					j
-				)
+			const block = new THREE.Vector3(
+				i,
+				Math.ceil(Math.sin(i / 25) * 8 + Math.cos(j / 25) * 8),
+				j
 			)
+			chunk.push(block)
+			chunkSet.add(block.toArray().toString())
 		}
 	}
 
-	const faceCounts = countVisibleFaces(chunk)
+	const faceCounts = countVisibleFaces(chunkSet, chunk)
 
 	const faces = [
 		new Face("Up", faceCounts.Up, textures[0]),
@@ -108,7 +112,7 @@ function onTextureLoaded(textures: THREE.Texture[]) {
 
 	const cubes = [] as Block[]
 	chunk.forEach((block) => {
-		cubes.push(new Block(filterFaces(faces, block, chunk), block))
+		cubes.push(new Block(filterFaces(faces, block, chunkSet), block))
 	})
 
 	faces.forEach((face) => {
