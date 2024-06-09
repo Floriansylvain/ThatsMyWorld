@@ -1,8 +1,8 @@
 import {
-	Color,
 	InstancedMesh,
-	MeshLambertMaterial,
+	MeshBasicMaterial,
 	PlaneGeometry,
+	Texture,
 	Vector3
 } from "three"
 
@@ -43,14 +43,20 @@ export const FACE_ORIENTATION = [
 ]
 
 export default class Face {
-	material: MeshLambertMaterial
+	material: MeshBasicMaterial
 	orientation: Orientation
 	geometry: PlaneGeometry
 	instancedMesh: InstancedMesh | undefined
 	instaceIndex: number = 0
 
-	constructor(color: Color, orientation: Orientation, instancesCount: number) {
-		this.material = new MeshLambertMaterial({ color })
+	constructor(
+		orientation: Orientation,
+		instancesCount: number,
+		texture: Texture
+	) {
+		this.material = new MeshBasicMaterial({
+			map: texture
+		})
 
 		this.orientation = orientation
 
