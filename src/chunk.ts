@@ -16,36 +16,43 @@ interface BlockData {
 }
 
 export default class Chunk {
+	position: Vector3
 	chunk: BlockData[]
 	chunkSet: Set<string>
 	radius: number
 	textures: { [name: string]: Texture[] }
 	faces: { [key: string]: Face[] }
 
-	constructor(radius: number, textures: { [name: string]: Texture[] }) {
+	constructor(
+		radius: number,
+		textures: { [name: string]: Texture[] },
+		position: Vector3
+	) {
+		this.position = position
 		this.chunk = []
 		this.chunkSet = new Set<string>()
 		this.radius = radius
 		this.textures = textures
 		this.faces = {}
-		this.generateChunk()
-		this.initializeFaces()
 	}
 
-	generateChunk() {
-		for (let i = 0; i < this.radius; i++) {
-			for (let j = 0; j < this.radius; j++) {
-				const max = Math.ceil(Math.sin(i / 30) * 10 + Math.cos(j / 30) * 10)
-				for (let k = -16; k <= max; k++) {
-					const position = new Vector3(i, k, j)
-					let textureName = "stone"
-					if (k === max) textureName = "grass"
-					else if (k > max - 6) textureName = "dirt"
-					this.chunk.push({ position, textureName })
-					this.chunkSet.add(position.toArray().toString())
+	async generateChunk() {
+		return new Promise((resolve) => {
+			for (let i = this.position.x; i < this.radius + this.position.x; i++) {
+				for (let j = this.position.z; j < this.radius + this.position.z; j++) {
+					const max = Math.ceil(Math.sin(i / 30) * 10 + Math.cos(j / 30) * 10)
+					for (let k = -16; k <= max; k++) {
+						const position = new Vector3(i, k, j)
+						let textureName = "stone"
+						if (k === max) textureName = "grass"
+						else if (k > max - 6) textureName = "dirt"
+						this.chunk.push({ position, textureName })
+						this.chunkSet.add(position.toArray().toString())
+					}
 				}
 			}
-		}
+			resolve("")
+		})
 	}
 
 	initializeFaces() {

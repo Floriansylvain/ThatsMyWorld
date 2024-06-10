@@ -31,22 +31,36 @@ async function loadTextures() {
 }
 
 function onTexturesLoaded() {
-	const radius = 128
-	const chunk = new Chunk(radius, textures)
+	const radius = 16
 
-	chunk.countVisibleFaces()
+	const positions = [] as THREE.Vector3[]
+	for (let i = -8; i < 8; i++) {
+		for (let j = -8; j < 8; j++) {
+			positions.push(new THREE.Vector3(i * radius, 0, j * radius))
+		}
+	}
 
-	const cubes = [] as Block[]
-	chunk.chunk.forEach(({ position, textureName }) => {
-		const faces = chunk.filterFaces(position, textureName)
-		cubes.push(new Block(faces, position))
-	})
+	const chunks = positions.map(
+		(position) => new Chunk(radius, textures, position)
+	)
+	chunks.map((chunk) =>
+		chunk.generateChunk().then(() => {
+			chunk.initializeFaces()
+			chunk.countVisibleFaces()
 
-	Object.values(chunk.faces).forEach((faceArray) => {
-		faceArray.forEach((face) => {
-			if (face.instancedMesh) scene.add(face.instancedMesh)
+			const cubes = [] as Block[]
+			chunk.chunk.forEach(({ position, textureName }) => {
+				const faces = chunk.filterFaces(position, textureName)
+				cubes.push(new Block(faces, position))
+			})
+
+			Object.values(chunk.faces).forEach((faceArray) => {
+				faceArray.forEach((face) => {
+					if (face.instancedMesh) scene.add(face.instancedMesh)
+				})
+			})
 		})
-	})
+	)
 }
 
 camera.position.x = 15
@@ -55,6 +69,7 @@ camera.position.z = 15
 
 function animate(elapsedTimeMs: number) {
 	renderer.render(scene, camera)
+	console.log(renderer.info.render.calls)
 	controls.update()
 }
 
