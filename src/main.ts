@@ -34,8 +34,8 @@ function onTexturesLoaded() {
 	const radius = 16
 
 	const positions = [] as THREE.Vector3[]
-	for (let i = -8; i < 8; i++) {
-		for (let j = -8; j < 8; j++) {
+	for (let i = -0.5; i < 0.5; i++) {
+		for (let j = -0.5; j < 0.5; j++) {
 			positions.push(new THREE.Vector3(i * radius, 0, j * radius))
 		}
 	}
